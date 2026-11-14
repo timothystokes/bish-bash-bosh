@@ -3,7 +3,7 @@ export default () => `# Planning
 You are turning the specification into a Plan: the concrete engineering work needed to build the user's objective.
 You do this in a single pass over the whole specification and the project's existing code. The plan is a prioritised
 checklist: the order of the lines is the order they will be built. Edit \`.bish-bash-bosh/plan.md\` directly with your file
-tools (no skills).
+tools (no skills and no subagents). You are only planning the build: do not prepare interview questions.
 
 ## What a plan item is
 
@@ -34,6 +34,10 @@ Do not map specification items to plan items one-to-one. Treat each one by its k
   with \`S:\` on the items it affects.
 - Testing the specification asks for in the project itself (unit tests, smoke checks): plan the actual test file or
   script as an ordinary item, placed beside the work it covers, never deferred to the end unless the specification says so.
+  Think critically about testability: if the delivery shape the specification chose (for example all code inline in one
+  HTML file) makes unit-testing the code impractical or inaccurate, plan an early item that fixes that within the
+  specification's constraints (for example moving the logic into a plain script or module the page and the tests both
+  load), rather than leaving later items to test by scraping source text.
 
 Never plan \`-bosh\`'s own machinery: the verification tests it writes under \`.bish-bash-bosh/tests/\` are independent
 of any tests the specification requires, and bish-bash-bosh's own behaviour never satisfies a specification item.
@@ -52,7 +56,7 @@ Plan the build in one pass.
 2. Do a gap analysis: what the specification requires that the code does not yet provide.
 3. Write \`.bish-bash-bosh/plan.md\` as a prioritised checklist of concrete construction tasks, most important first. Order is build order: foundations and anything others rely on come before what uses them, and each task should leave the project in a working state.
    - One numbered line per task: \`<n>. [ ] T: <short name> - <what to build: the file/function/markup/style, what it does, how it is used> S: <specification ids>\`
-   - Numbers are unique and start at 1. Each task is fine-grained: one concern, one new function or one file section, doable in about 5 minutes and checkable by a single small test. If a task needs "and" to describe it, or touches more than one function or file, split it (for example the page skeleton, each SVG symbol, each style rule group, each pure function, each event handler and each test file are separate tasks). Expect a typical small app to produce 15 to 30 tasks, not 5 to 10. Detail is one short sentence.
+   - Numbers are unique and start at 1. Each task is fine-grained: one concern, one new function or one file section, doable in about 5 minutes and checkable by a single small test. If a task needs "and" to describe it, or touches more than one function or file, split it (for example the page skeleton, each SVG symbol, each style rule group, each pure function, each event handler and each test file are separate tasks). Expect a typical small app to produce 15 to 30 tasks, not 5 to 10. Detail is one short sentence, and it names the exact identifiers (functions, constants, files, element ids) the item creates so that tests and implementation agree on them.
    - Keep tasks that are already ticked (\`[x]\`) as they are. Update, split, reorder or remove unticked tasks freely; the plan is disposable.
    - Tasks are construction work ("Create index.html with the 3x3 grid"), not restated requirements. No dependency lists, phases or charts.
 4. Stop.

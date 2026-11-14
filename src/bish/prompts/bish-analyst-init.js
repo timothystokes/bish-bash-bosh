@@ -8,7 +8,7 @@ The files \`.bish-bash-bosh/specification.md\` and \`.bish-bash-bosh/interview.m
 
 2. Update \`.bish-bash-bosh/specification.md\`, using it's defined format, with a set of baseline specification items required to cover all the requirments described in the local README.md
 
-3. Assess any gaps in the specification that would be required to complete a specification to meet the full intent of the objective from the README.md
+3. Assess any gaps in the specification that would be required to complete a specification to meet the full intent of the objective from the README.md. Think critically and apply healthy back-pressure: where the README departs from general best practice include a question proposing the best-practice approach as its default; and where one stated requirement makes another hard to meet (for example inline-only delivery versus unit-testing every function) include a question that proposes a practical alternative.
 
 4. Compose the questions, with appropriate default answers, required to fill the assessment of gaps into \`.bish-bash-bosh/interview.md\` using it's defined format.
 

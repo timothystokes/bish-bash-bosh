@@ -300,6 +300,16 @@ test('tests that still pass on the retry are accepted (the item was implemented 
   assert.ok(adapter.calls.some((c) => c.prompt.trimStart().startsWith(head('builder'))));
 });
 
+test('a Test Writer reply ending ALREADY IMPLEMENTED: is accepted on the first attempt, and the Inspector is told which plan items are still to come', async () => {
+  const { path, dir } = makeFile('1. [ ] T: a\n2. [ ] T: later work\n');
+  const adapter = fakeAdapter((req) => (req.prompt.includes('You are a Test Writer') ? { transcript: 'ALREADY IMPLEMENTED: index.html' } : {}));
+  const res = await run(path, dir, adapter, { runTests: () => ({ ok: true, output: 'all green' }) });
+  assert.equal(res.status, 'ok');
+  assert.equal(adapter.calls.filter((c) => c.prompt.trimStart().startsWith(head('test-writer'))).length, 2, 'one Test Writer call per item, no retry');
+  const inspector = adapter.calls.find((c) => c.prompt.trimStart().startsWith(head('inspector')));
+  assert.match(inspector.prompt, /still to come[\s\S]*- 2\. later work/);
+});
+
 test('the Inspector\'s VERIFIED line ticks only the item\'s own specification items', async () => {
   const { path, dir } = makeFile('1. [ ] T: a S: 1, 2\n');
   const specPath = join(dir, 'specification.md');

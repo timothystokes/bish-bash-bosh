@@ -18,7 +18,7 @@ export function helpText() {
     '',
     '  -bish [Interview & Specification]',
     '    Usage: -bish [--reverse] [--debug]',
-    '    Requires README.md in the project root. If config is missing, asks for the adapter/model and writes `.bish-bash-bosh/config.yml` (committed when possible); blank input or EOF aborts without writing config. Existing invalid config is an error, not a reason to reset setup.',
+    '    Requires README.md in the project root. If config is missing, asks for the adapter/model and writes `.bish-bash-bosh/config.yml` (the whole folder is git-ignored); blank input or EOF aborts without writing config. Existing invalid config is an error, not a reason to reset setup.',
     '    The very first run writes `.bish-bash-bosh/interview.md` and `.bish-bash-bosh/specification.md` from their templates, has the agent draft both from README.md (baseline specification and initial questions), and exits for review.',
     '    Run again to start the Interview Loop: it finds the first unanswered question in `interview.md`, shows it in colour, reads your answer from stdin (Enter alone keeps any existing default text), hands the round to the agent, marks its answered checkbox, and repeats; Ctrl-D (EOF) pauses and a rerun resumes.',
     '    With --reverse it instead reverse-engineers `.bish-bash-bosh/specification.md` from existing code (commits only if nothing else changed and the specification has well-formed items).',

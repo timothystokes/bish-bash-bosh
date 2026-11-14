@@ -73,8 +73,6 @@ test('bish on a fresh repo seeds the stores from their templates, has the agent 
     join(dir, '.bish-bash-bosh', 'interview.md'),
     `${readFileSync(join(dir, '.bish-bash-bosh', 'interview.md'), 'utf8')}\n2. [ ] Q: Who uses the greeter? A: Developers\n`,
   );
-  git(dir, 'add', '-A');
-  git(dir, 'commit', '-qm', 'seed interview store');
   out.length = 0;
   const paused = await withCwd(dir, () =>
     main(['bish'], { registry, identity, input: Readable.from(['Build a greeter\n']), stdout: (s) => { out.push(s); }, stderr: () => {} }));

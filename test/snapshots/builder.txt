@@ -23,7 +23,11 @@ The following specifications from '.bish-bash-bosh/specification.md' directly re
 
 # Instructions
 
-ALL user specified requirements MUST be implemented in the users main project folder not in .bish-bash-bosh
+ALL user specified requirements MUST be implemented in the users main project folder not in .bish-bash-bosh. Anything inside `.bish-bash-bosh/` belongs to the harness: it is git-ignored and never part of the solution, so ignore it when reviewing diffs or status.
+
+Use no skills and no subagents: read and edit files directly. Run only this item's test file while working; the harness runs the whole suite itself. Do not shape the code around how the tests read its source text: if a test only passes by matching the code's text, report it with `TEST FEEDBACK:`.
+
+If the item itself is to write the project's own tests, write them in the project folder, outside .bish-bash-bosh.
 
 Build exactly what those tests focus on as the definition of done for this item.
 

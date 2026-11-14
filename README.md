@@ -34,7 +34,7 @@ npm install -g github:timothystokes/-bish-bash-bosh   # or, from a clone: npm in
 
 3. Run -bish command from within the folder.
 
-The project must be a git repository. The harness (never the agents) commits, and never pushes: after the bootstrap, after each answered interview question (message: the question and answer), once when `-bash` writes the plan, and after each task `-bosh` completes (message: the task and its specification ids). Everything in the project folder is staged for those commits, so keep unrelated work out of it.
+The project must be a git repository. The harness (never the agents) commits, and never pushes: after the bootstrap, after each answered interview question (message: the question and answer), once when `-bash` writes the plan, and after each task `-bosh` completes (message: the task and its specification ids). Everything in the project folder is staged for those commits, so keep unrelated work out of it. The harness's own `.bish-bash-bosh/` folder (specification, interview, plan, tests, logs) is git-ignored entirely, since it is not part of your solution, so only changes to the project itself are committed.
 
 
 ## Workflow

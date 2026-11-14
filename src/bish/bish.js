@@ -52,9 +52,9 @@ export async function runBish(argv, deps, out, err) {
         err(`${label}: ${res.reason}\n`);
         return 1;
       }
-      out(`Wrote${res.committed ? ' and committed' : ''} ${CONFIG_FILE} (adapter: ${adapter}, model: ${model}).\n`);
+      out(`Wrote ${CONFIG_FILE} (adapter: ${adapter}, model: ${model}). The harness folder is git-ignored${res.committed ? ' (.gitignore committed)' : ''}.\n`);
       if (!res.committed) {
-        out(`Commit it before running bish/bosh when a clean working tree is required:\n  git add ${CONFIG_FILE} && git commit -m "bish: add config"\n`);
+        out('Commit .gitignore before running bish --reverse, which requires a clean working tree.\n');
       }
     }
     const project = loadRunProject(label, err);

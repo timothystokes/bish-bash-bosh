@@ -127,8 +127,8 @@ export function buildBuildLoopPrompt(item, failure, specrows = '', questions = '
 // plan.md and the source, fixing bugs directly. A retry carries the previous failure the same way.
 export const TEST_RESULTS_FILE = '.bish-bash-bosh/test-results.txt';
 
-export function buildQaLoopPrompt(item, failure, specrows = '', questions = '', changedFiles = []) {
-  return inspectorPrompt(describeItem(item), clip(failure ?? ''), testFileFor(item), TEST_RESULTS_FILE, specrows, questions, changedFiles);
+export function buildQaLoopPrompt(item, failure, specrows = '', questions = '', changedFiles = [], laterItems = []) {
+  return inspectorPrompt(describeItem(item), clip(failure ?? ''), testFileFor(item), TEST_RESULTS_FILE, specrows, questions, changedFiles, laterItems.map((i) => `${i.id}. ${i.task}`));
 }
 
 // Ticks a plan item's checkbox by line index, re-reading the file first since something else may have
@@ -156,6 +156,8 @@ async function callAgent(adapter, repoDir, prompt, log, persona, role) {
   const { changed, violations } = enforce(repoDir, before, role);
   return { reply: `${res?.transcript ?? ''}\n${reasoning}`, changed, violations };
 }
+
+const ALREADY_IMPLEMENTED = /^[ \t>*-]*ALREADY IMPLEMENTED:/m;
 
 // The Builder reports a defective test by ending its reply with a `TEST FEEDBACK: <what is wrong>` line (it never edits tests).
 export function testFeedbackFrom(reply) {
@@ -263,7 +265,7 @@ export async function runBuildLoop({
         // pass on the retry are accepted (the Inspector then checks the work) instead of failing the item.
         let alreadyGreen = 0;
         const redFailure = await step('Test Writer', async (previous) => {
-          const { violations } = await callAgent(adapter, repoDir, buildTestLoopPrompt(next, previous, ...contextFor(next, { repoDir, specPath, readFile })), log, 'bosh/test-writer', 'test-writer');
+          const { reply, violations } = await callAgent(adapter, repoDir, buildTestLoopPrompt(next, previous, ...contextFor(next, { repoDir, specPath, readFile })), log, 'bosh/test-writer', 'test-writer');
           if (violations.length) return describeViolations('test-writer', violations);
           const after = listTests({ cwd: repoDir });
           const touched = [...after].filter(([path, stamp]) => before.get(path) !== stamp).map(([path]) => path);
@@ -273,12 +275,17 @@ export async function runBuildLoop({
           const broken = red.ok ? '' : describeTestErrors(red.output);
           if (broken) return `${broken}Fix the tests so they run and fail on an assertion because the item's behaviour is missing.\n${red.output}`;
           if (red.ok && testFeedback) return '';
+          if (red.ok && ALREADY_IMPLEMENTED.test(reply)) {
+            implementedAlready = true;
+            log('bosh/harness', `The Test Writer reports the item is already implemented; its tests (${touched.join(', ')}) pass as they stand.`);
+            return '';
+          }
           if (red.ok && ++alreadyGreen >= 2) {
             implementedAlready = true;
             log('bosh/harness', `The new tests (${touched.join(', ')}) still pass before any implementation; accepting them, the item may already be implemented from an earlier run.`);
             return '';
           }
-          if (red.ok) return `The new tests (${touched.join(', ')}) already pass before any implementation, so they prove nothing: make them fail for the right reason (the item's behaviour missing). If the project's files already implement this item, say so in your reply and keep the tests as they are.\n${red.output}`;
+          if (red.ok) return `The new tests (${touched.join(', ')}) already pass before any implementation, so they prove nothing: make them fail for the right reason (the item's behaviour missing). If the project's files already implement this item, keep the tests as they are and end your reply with a line starting with ALREADY IMPLEMENTED: saying where.\n${red.output}`;
           return '';
         }, testFeedback, testFeedback ? 'with feedback from the Builder' : '');
         if (redFailure) return fail(redFailure, 'Test Writer');
@@ -313,7 +320,7 @@ export async function runBuildLoop({
         // The Inspector reads the latest full-suite output from a results file the harness writes before it runs.
         harness('Writing the test results for the Inspector');
         writeFile(join(repoDir, TEST_RESULTS_FILE), latestResults);
-        const inspected = await callAgent(adapter, repoDir, buildQaLoopPrompt(next, previous, ...contextFor(next, { repoDir, specPath, readFile }), [...projectFiles]), log, 'bosh/inspector', 'inspector');
+        const inspected = await callAgent(adapter, repoDir, buildQaLoopPrompt(next, previous, ...contextFor(next, { repoDir, specPath, readFile }), [...projectFiles], items.filter((i) => !i.checked && i.id !== next.id)), log, 'bosh/inspector', 'inspector');
         if (inspected.violations.length) return describeViolations('inspector', inspected.violations);
         verdict = parseVerdict(inspected.reply);
         return verdict.approved || verdict.feedback ? '' : 'End your reply with APPROVED (and a VERIFIED: line) or with a line starting with FEEDBACK: describing what must change.';

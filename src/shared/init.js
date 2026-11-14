@@ -4,11 +4,13 @@ import { dirname, join, resolve } from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
 import { validateConfig } from './config.js';
 import { CONFIG_FILE } from './project-config.js';
+import { ignoreHarness } from './git-commit.js';
 
 const git = (dir, ...args) => execFileSync('git', ['-C', dir, '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
 
-// Reverse engineering requires a clean baseline. Commit new config when possible; otherwise
-// the caller tells the owner to commit it by hand.
+// The config lives in the git-ignored harness folder, so there is nothing of it to commit. Reverse engineering
+// requires a clean baseline, so the `.gitignore` entry that ignores the folder is committed when possible;
+// otherwise the caller tells the owner to commit it by hand.
 function commitConfig(dir, configPath) {
   try {
     git(dir, 'rev-parse', '--is-inside-work-tree');
@@ -16,8 +18,9 @@ function commitConfig(dir, configPath) {
     return false;
   }
   try {
-    git(dir, 'add', '--', configPath);
-    git(dir, 'commit', '-q', '-m', 'bish: add config', '--only', '--', configPath);
+    if (!ignoreHarness(dir)) return false;
+    git(dir, 'add', '--', '.gitignore');
+    git(dir, 'commit', '-q', '-m', 'bish: ignore the harness folder', '--only', '--', '.gitignore');
     return true;
   } catch {
     return false;

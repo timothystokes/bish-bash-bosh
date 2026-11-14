@@ -55,7 +55,7 @@ test('bish on a fresh project seeds interview.md, then the Interview Loop asks i
   const seedCode = await withCwd(repo, () =>
     main(['bish'], { registry: { 'agent-x': draftingAdapter }, input: Readable.from([]), stdout: (s) => (seed += s), stderr: () => {} }));
   assert.equal(seedCode, 1, seed);
-  assert.equal(git(repo, 'log', '-1', '--format=%s'), 'bish: draft specification and interview questions from README.md', 'the harness committed the draft');
+  assert.equal(git(repo, 'ls-files', '.bish-bash-bosh'), '', 'the harness folder is git-ignored, so the draft is not committed');
   let out = '';
   /** @type {string[]} */
   const prompts = [];

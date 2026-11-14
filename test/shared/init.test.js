@@ -47,16 +47,17 @@ test('writes .bish-bash-bosh/config.yml with a single adapter/model', () => {
   assert.equal(res.committed, false, 'no git repo here, so nothing to commit');
 });
 
-test('commits the config when run inside a git repo (so the tree is clean for bish/bosh)', () => {
+test('ignores the harness folder and commits that .gitignore when run inside a git repo (so the tree is clean for bish/bosh)', () => {
   const dir = freshDir('init-');
   initGitRepo(dir);
   const res = initProject({ dir, adapter: 'agent-x', model: 'model-y' });
   assert.equal(res.ok, true, JSON.stringify(res));
   assert.equal(res.committed, true);
+  assert.equal(readFileSync(join(dir, '.gitignore'), 'utf8'), '.bish-bash-bosh/\n');
   assert.equal(execFileSync('git', ['-C', dir, 'status', '--porcelain'], { encoding: 'utf8' }).trim(), '');
 });
 
-test('automatic setup makes its own commit of only the config, before the harness commits the bootstrap', async () => {
+test('automatic setup makes its own commit of only .gitignore, and the git-ignored harness folder is never committed', async () => {
   const dir = proj();
   initGitRepo(dir);
   writeFileSync(join(dir, 'owner-work.txt'), 'unfinished owner work\n');
@@ -65,9 +66,9 @@ test('automatic setup makes its own commit of only the config, before the harnes
   assert.equal(r.code, 1, r.err); // the interview then pauses at its first unanswered question
   const root = execFileSync('git', ['-C', dir, 'rev-list', '--max-parents=0', 'HEAD'], { encoding: 'utf8' }).trim();
   const committed = execFileSync('git', ['-C', dir, 'diff-tree', '--root', '--no-commit-id', '--name-only', '-r', root], { encoding: 'utf8' }).trim();
-  assert.equal(committed, '.bish-bash-bosh/config.yml');
-  const head = execFileSync('git', ['-C', dir, 'log', '-1', '--format=%s'], { encoding: 'utf8' }).trim();
-  assert.match(head, /^bish: draft specification and interview questions/);
+  assert.equal(committed, '.gitignore');
+  const tracked = execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8' });
+  assert.doesNotMatch(tracked, /\.bish-bash-bosh/);
 });
 
 test('refuses to run if .bish-bash-bosh/config.yml already exists (no silent overwrite)', () => {
@@ -106,14 +107,14 @@ async function run(args, lines = [], deps = {}) {
   return { code, out: outs.join(''), err: errs.join('') };
 }
 
-test('first bish asks for a single adapter/model, commits config and seeds and drafts the interview files from README.md', async () => {
+test('first bish asks for a single adapter/model, ignores the harness folder, seeds and drafts the interview files from README.md', async () => {
   const dir = proj();
   initGitRepo(dir);
   const r = await withCwd(dir, () => run(['bish'], ['copilot', 'm1'], { registry: draftingRegistry }));
   assert.equal(r.code, 1, r.err); // the interview then pauses at its first unanswered question
   assert.match(r.out, /adapter.*model/s, 'prompts are shown');
   assert.doesNotMatch(r.out, /interview adapter|reverse adapter|build adapter|qa adapter/, 'one prompt, not one per role');
-  assert.match(r.out, /Wrote and committed \.bish-bash-bosh\/config\.yml \(adapter: copilot, model: m1\)/);
+  assert.match(r.out, /Wrote \.bish-bash-bosh\/config\.yml \(adapter: copilot, model: m1\)\. The harness folder is git-ignored \(\.gitignore committed\)/);
   const cfg = parseYaml(readFileSync(join(dir, '.bish-bash-bosh', 'config.yml'), 'utf8'));
   assert.equal(cfg.adapter, 'copilot');
   assert.equal(cfg.model, 'm1');
@@ -121,7 +122,7 @@ test('first bish asks for a single adapter/model, commits config and seeds and d
     assert.ok(existsSync(join(dir, '.bish-bash-bosh', file)), file);
   }
   assert.match(r.out, /Starting the interview/);
-  assert.equal(execFileSync('git', ['-C', dir, 'show', 'HEAD:.bish-bash-bosh/config.yml'], { encoding: 'utf8' }), readFileSync(join(dir, '.bish-bash-bosh', 'config.yml'), 'utf8'));
+  assert.doesNotMatch(execFileSync('git', ['-C', dir, 'ls-files'], { encoding: 'utf8' }), /\.bish-bash-bosh/, 'the harness folder is git-ignored');
 });
 
 test('every command refuses a project that is not a git repository', async () => {
